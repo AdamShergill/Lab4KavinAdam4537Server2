@@ -16,6 +16,8 @@ const server = https.createServer((req, res) => {
     "X-Content-Type-Options": "nosniff"
   };
 
+  console.log(`Received ${req.method} request for ${pathname}`); // Log the request method and path
+
   // Handle preflight OPTIONS request
   if (req.method === "OPTIONS") {
     res.writeHead(204, headers);
