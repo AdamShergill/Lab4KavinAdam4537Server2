@@ -1,4 +1,4 @@
-const http = require("http");
+const https = require("https");
 const url = require("url");
 
 let dictionary = []; // Array to store word-definition objects
