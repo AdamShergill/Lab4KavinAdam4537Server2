@@ -4,7 +4,7 @@ const url = require("url");
 let dictionary = []; // Array to store word-definition objects
 let totalRequests = 0; // Counter to track the total number of requests
 
-const server = http.createServer((req, res) => {
+const server = https.createServer((req, res) => {
   totalRequests++; // Increment total requests on each call
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
