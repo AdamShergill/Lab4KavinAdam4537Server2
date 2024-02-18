@@ -1,14 +1,12 @@
 {
-  "name": "Lab4Comp4537",
+  "name": "lab4kavinadam4537server2",
   "version": "1.0.0",
-  "description": "A simple dictionary API",
-  "main": "server.js",
+  "description": "",
+  "main": "server2.js",
   "scripts": {
-    "start": "node server.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "engines": {
-    "node": "16.x"
-  },
-  "author": "Your Name",
+  "keywords": [],
+  "author": "",
   "license": "ISC"
 }
