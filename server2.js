@@ -23,6 +23,9 @@ const server = http.createServer((req, res) => {
   const parsedUrl = urlModule.parse(url, true);
   const pathname = parsedUrl.pathname;
 
+  // Apply the headers to all responses
+  res.writeHead(200, headers);
+
   // Endpoint for '/api/definitions'
   if (pathname === "/api/definitions") {
     // Handle GET request
@@ -31,7 +34,6 @@ const server = http.createServer((req, res) => {
       const word = queryParams.word;
 
       let definition = dictionary.get(word);
-      res.writeHead(200, headers);
       res.end(JSON.stringify({ word: word, definition: definition || "Word not found" }));
 
     // Handle POST request
@@ -59,7 +61,6 @@ const server = http.createServer((req, res) => {
           }
 
           dictionary.set(word, definition);
-          res.writeHead(201, headers);
           res.end(JSON.stringify({ message: `Word '${word}' added to dictionary` }));
 
         } catch (e) {
