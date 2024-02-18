@@ -1,0 +1,14 @@
+{
+  "name": "Lab4Comp4537",
+  "version": "1.0.0",
+  "description": "A simple dictionary API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "16.x"
+  },
+  "author": "Your Name",
+  "license": "ISC"
+}
