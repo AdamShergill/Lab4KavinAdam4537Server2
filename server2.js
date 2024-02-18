@@ -1,6 +1,4 @@
 const http = require("http");
-const host = "localhost";
-const port = 8083;
 const urlModule = require("url");
 
 const dictionary = new Map();
@@ -14,7 +12,7 @@ const server = http.createServer((req, res) => {
   const parsedUrl = urlModule.parse(url, true);
   const pathname = parsedUrl.pathname;
 
-  if (pathname === "/words") {
+  if (pathname === "/api/definitions") {
     if (method === "GET") {
       const queryParams = parsedUrl.query;
       const word = queryParams.word;
@@ -27,7 +25,7 @@ const server = http.createServer((req, res) => {
         })
       );
 
-      console.log("GET request received on /words");
+      console.log("GET request received for word search");
     } else if (method === "POST") {
       let body = "";
       req.on("data", (chunk) => {
@@ -39,26 +37,24 @@ const server = http.createServer((req, res) => {
           const jsonData = JSON.parse(body);
           const { word, definition } = jsonData;
 
-          if (
-            !word ||
-            !definition ||
-            typeof word !== "string" ||
-            typeof definition !== "string" ||
-            !isNaN(Number(word)) ||
-            !isNaN(Number(definition))
-          ) {
+          if (!word || !definition || typeof word !== "string" || typeof definition !== "string") {
             res.writeHead(400, { "Content-Type": "application/json" });
             res.end(
               JSON.stringify({
-                error:
-                  "Invalid input. Word and definition must be non-empty strings.",
+                error: "Invalid input. Word and definition must be non-empty strings.",
               })
             );
             return;
           }
 
+          if (dictionary.has(word)) {
+            res.writeHead(409, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: `The word '${word}' already exists.` }));
+            return;
+          }
+
           dictionary.set(word, definition);
-          res.end(JSON.stringify({ message: "Word added to dictionary" }));
+          res.end(JSON.stringify({ message: `Word '${word}' added to dictionary` }));
         } catch (e) {
           console.error(e);
           res.writeHead(400, { "Content-Type": "application/json" });
@@ -66,16 +62,19 @@ const server = http.createServer((req, res) => {
         }
       });
 
-      console.log("POST request received on /words");
+      console.log("POST request received for adding a word");
     } else {
-      res.end(JSON.stringify({ message: "Method not allowed on /words" }));
+      res.writeHead(405, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Method not allowed" }));
     }
   } else {
-    res.writeHead(404);
-    res.end(JSON.stringify({ message: "Not Found" }));
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Not Found" }));
   }
 });
 
-server.listen(port, host, () => {
-  console.log(`Server is running on http://${host}:${port}`);
+// Listening on the port provided by by heroku or 8083 for local development
+const PORT = process.env.PORT || 8083;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
