@@ -4,7 +4,6 @@ const urlModule = require("url");
 const dictionary = new Map();
 
 const server = http.createServer((req, res) => {
-  // Set CORS headers for all responses
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "OPTIONS, POST, GET",
@@ -23,27 +22,28 @@ const server = http.createServer((req, res) => {
   const parsedUrl = urlModule.parse(url, true);
   const pathname = parsedUrl.pathname;
 
-  // Apply the headers to all responses
-  res.writeHead(200, headers);
-
-  // Endpoint for '/api/definitions'
   if (pathname === "/api/definitions") {
-    // Handle GET request
-    if (method === "GET") {
-      const queryParams = parsedUrl.query;
-      const word = queryParams.word;
+    let body = [];
 
-      let definition = dictionary.get(word);
-      res.end(JSON.stringify({ word: word, definition: definition || "Word not found" }));
+    req.on("data", (chunk) => {
+      body.push(chunk);
+    });
 
-    // Handle POST request
-    } else if (method === "POST") {
-      let body = "";
-      req.on("data", (chunk) => {
-        body += chunk.toString();
-      });
+    req.on("end", () => {
+      body = Buffer.concat(body).toString();
 
-      req.on("end", () => {
+      // Handle GET request
+      if (method === "GET") {
+        const queryParams = parsedUrl.query;
+        const word = queryParams.word;
+        const definition = dictionary.get(word);
+        res.writeHead(200, headers);
+        res.end(JSON.stringify({ word: word, definition: definition || "Word not found" }));
+        return;
+      }
+
+      // Handle POST request
+      if (method === "POST") {
         try {
           const jsonData = JSON.parse(body);
           const { word, definition } = jsonData;
@@ -61,28 +61,28 @@ const server = http.createServer((req, res) => {
           }
 
           dictionary.set(word, definition);
+          res.writeHead(201, headers);
           res.end(JSON.stringify({ message: `Word '${word}' added to dictionary` }));
-
+          return;
         } catch (e) {
           console.error(e);
           res.writeHead(400, headers);
           res.end(JSON.stringify({ error: "Invalid JSON" }));
+          return;
         }
-      });
+      }
 
-    } else {
-      // Method not allowed
+      // If none of the above, send method not allowed
       res.writeHead(405, headers);
       res.end(JSON.stringify({ error: "Method not allowed" }));
-    }
+    });
   } else {
-    // Not found
+    // If not the API endpoint, send not found
     res.writeHead(404, headers);
     res.end(JSON.stringify({ error: "Not Found" }));
   }
 });
 
-// Listening on the port provided by Heroku or 8083 for local development
 const PORT = process.env.PORT || 8083;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
