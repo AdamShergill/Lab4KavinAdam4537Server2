@@ -1,10 +1,13 @@
 const http = require("http");
 const urlModule = require("url");
 
-// Initialize dictionary as a Map to store words and definitions
-const dictionary = new Map();
+// Initialize dictionary as an array to store word-definition objects
+let dictionary = [];
+let totalRequests = 0; // Counter for total number of requests
 
 const server = http.createServer((req, res) => {
+  totalRequests++; // Increment total requests on each call
+
   // Set CORS headers to ensure cross-origin requests are handled
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -24,35 +27,37 @@ const server = http.createServer((req, res) => {
   // Process GET and POST requests on "/api/definitions" path
   if (pathname === "/api/definitions") {
     if (method === "GET") {
-      // Handle word definition retrieval
-      const queryParams = parsedUrl.query;
-      const word = queryParams.word;
-      const definition = dictionary.get(word);
-
+      const { word } = parsedUrl.query;
+      const entry = dictionary.find((entry) => entry.word === word);
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ word, definition: definition || "Word not found" }));
+      if (entry) {
+        res.end(JSON.stringify({ word: entry.word, definition: entry.definition }));
+      } else {
+        res.end(JSON.stringify({ error: "Word not found" }));
+      }
     } else if (method === "POST") {
-      // Handle new word definition storage
       let body = "";
-      req.on("data", chunk => {
-        body += chunk.toString(); // Convert Buffer to string
+      req.on("data", (chunk) => {
+        body += chunk.toString();
       });
       req.on("end", () => {
         const { word, definition } = JSON.parse(body);
-
-        if (!word || !definition) {
+        if (!word || typeof word !== "string" || !definition || typeof definition !== "string") {
           res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid input" }));
+          res.end(JSON.stringify({ error: "Invalid input. Both word and definition must be strings." }));
           return;
         }
-
-        if (dictionary.has(word)) {
+        if (dictionary.some((entry) => entry.word === word)) {
           res.writeHead(409, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Word already exists" }));
+          res.end(JSON.stringify({ error: `The word '${word}' already exists.` }));
         } else {
-          dictionary.set(word, definition);
+          dictionary.push({ word, definition });
           res.writeHead(201, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ message: "Word added successfully" }));
+          res.end(JSON.stringify({
+            message: `Word '${word}' added successfully.`,
+            totalRequests,
+            totalEntries: dictionary.length
+          }));
         }
       });
     } else {
@@ -60,13 +65,11 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify({ error: "Method not allowed" }));
     }
   } else {
-    // Handle not found error for other paths
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not Found" }));
   }
 });
 
-// Listen on Heroku's provided port or 8083 if running locally
 const PORT = process.env.PORT || 8083;
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
