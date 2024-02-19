@@ -1,5 +1,6 @@
 /**
- * 
+ * Chat GPT was used to comment all of the code 
+ * Chat GPT was also used in the code to respond to preflight options requests.
  * 
  */
 
@@ -19,6 +20,7 @@ const server = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   // Respond to preflight OPTIONS requests by confirming that the requested methods are allowed
+  // Chat Gpt provided this code
   if (req.method === "OPTIONS") {
     res.writeHead(204);
     res.end();
